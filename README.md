@@ -95,3 +95,58 @@ Build practical IT support/sysadmin skills through hands-on labs, targeting entr
 ![alt text](image-2.png)
 - Result: both VMs reachable in both directions on first attempt — no UTM network-mode mismatch to troubleshoot this time.
 - Next: set up VM1 as a basic DNS server (dnsmasq) and point VM2 at it.
+
+**Aug 30, 2026 — DNS server setup (VM1) and resolution issues (VM2)**
+
+**Setup:**
+- Installed dnsmasq on VM1: `sudo apt install dnsmasq -y`
+- Added a custom DNS record in `/etc/dnsmasq.conf`.
+- Restarted the service: `sudo systemctl restart dnsmasq`
+
+**Issue 1 — netplan DNS config rejected on VM2**
+- Error: `Failed to set DNS configuration: Link lo is loopback device`
+- Cause: attempted to apply DNS settings in a way that conflicted with how 
+  systemd-resolved manages the loopback interface.
+- Fix: `sudo systemctl disable systemd-resolved` — removed the conflicting 
+  resolver so netplan's DNS setting could take effect directly.
+- Remark: On a real production machine I would edit /etc/systemd/resolved.conf to set the DNS server without fully disabling the service.
+
+**Issue 2 — queries never reaching VM1**
+- Symptom: `dig server1.lab.local` returned `status: REFUSED`, with the 
+  response coming from `127.0.0.53#53` instead of `192.168.64.3`.
+- Root cause: VM2 was querying Ubuntu's local stub resolver 
+  (`systemd-resolved`, bound to `127.0.0.53`) instead of forwarding the 
+  request to VM1 at all — the stub resolver intercepts DNS queries by 
+  default and doesn't automatically relay them to a custom nameserver.
+- Fix: set the resolver explicitly in `/etc/systemd/resolved.conf`:
+[Resolve]
+DNS=192.168.64.3
+
+**Issue 3 — `.local` domain collision with mDNS**
+- Symptom: even after fixing the resolver target, `ping server1.lab.local` 
+  still failed to resolve via standard DNS.
+- Root cause: `systemd-resolved` reserves the `.local` TLD specifically for 
+  Multicast DNS (mDNS/Bonjour-style discovery) and intercepts any `.local` 
+  query before it can be forwarded as a normal unicast DNS request — so no 
+  matter how the resolver was pointed, `.local` names were being handled by 
+  the wrong protocol entirely.
+- Fix: renamed the DNS record to avoid the reserved TLD:
+address=/server1.lab/192.168.64.3
+  (updated `/etc/dnsmasq.conf` on VM1, restarted dnsmasq, and re-tested 
+  from VM2 using `server1.lab` instead of `server1.lab.local`)
+
+**Verification:**
+$ dig server1.lab
+![alt text](image-3.png)
+$ ping -c 3 server1.lab
+![alt text](image-4.png)
+
+**Takeaway:** the actual DNS server config was correct from the start — 
+every failure here was a client-side resolver problem (systemd-resolved 
+intercepting queries and reserving `.local` for mDNS), not a dnsmasq issue. 
+Worth remembering for real troubleshooting: confirm which resolver a client 
+is actually using (`resolvectl status` would have shown this immediately) 
+before assuming the server-side config is wrong.
+
+**Next:** set up ufw firewall rules on VM1, then deliberately break and fix 
+one to close out Week 2.
