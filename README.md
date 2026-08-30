@@ -68,4 +68,30 @@ Build practical IT support/sysadmin skills through hands-on labs, targeting entr
 - Public repo established as the running record of this project.
 - One open item carried into Week 2: confirm static IP/DNS survives reboot (see verification block above).
 
+### Week 2 — Networking Fundamentals
 
+**Aug 30, 2026 — VM2 creation and dual-VM connectivity**
+- Created VM 2: Ubuntu Server 24.04 LTS ARM64 in UTM (Virtualize mode, 2 CPU / 4GB RAM / 25GB disk), OpenSSH enabled during install.
+- Confirmed both VMs are on UTM's Shared Network mode, same virtual switch — checked in UTM VM settings before assuming it, rather than after hitting a problem.
+- Assigned VM2 a static IP on the same subnet as VM1 via netplan:
+```yaml
+  network:
+    version: 2
+    ethernets:
+      enp0s1:
+        dhcp4: no
+        addresses:
+          - 192.168.64.4/24
+        routes:
+          - to: default
+            via: 192.168.64.1
+        nameservers:
+          addresses:
+            - 1.1.1.1
+```
+- Applied with `sudo netplan apply`, rebooted, verified IP held.
+- Verified bidirectional connectivity between the two VMs:
+![alt text](image-1.png)
+![alt text](image-2.png)
+- Result: both VMs reachable in both directions on first attempt — no UTM network-mode mismatch to troubleshoot this time.
+- Next: set up VM1 as a basic DNS server (dnsmasq) and point VM2 at it.
