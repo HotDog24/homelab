@@ -150,3 +150,22 @@ before assuming the server-side config is wrong.
 
 **Next:** set up ufw firewall rules on VM1, then deliberately break and fix 
 one to close out Week 2.
+
+**Aug 31, 2026 — Firewall rules on VM1 (ufw)**
+- Set default-deny posture and allowed only the specific traffic needed from VM2:
+```bash
+  sudo ufw default deny incoming
+  sudo ufw allow from 192.168.64.4 to any port 22 proto tcp   # SSH from VM2 only
+  sudo ufw allow from 192.168.64.4 to any port 53              # DNS from VM2 only
+  sudo ufw enable
+```
+- Confirmed rules applied as expected:
+![alt text](image-7.png)
+- Verified from VM2 that both allowed services still work after the firewall was enabled:
+SSH
+![alt text](image-5.png)
+DNS
+![alt text](image-6.png)
+- Result: default-deny with two explicit allow rules, restricted to VM2's IP specifically rather than open to the whole subnet — this is the "before" baseline for tomorrow's deliberate break/fix.
+
+**Next:** remove one rule intentionally, diagnose the failure using `ufw status` before assuming it's a DNS or network issue, then restore it.
