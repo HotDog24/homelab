@@ -169,3 +169,48 @@ DNS
 - Result: default-deny with two explicit allow rules, restricted to VM2's IP specifically rather than open to the whole subnet — this is the "before" baseline for tomorrow's deliberate break/fix.
 
 **Next:** remove one rule intentionally, diagnose the failure using `ufw status` before assuming it's a DNS or network issue, then restore it.
+
+**Sep 1, 2026 — Deliberate firewall misconfiguration and diagnosis**
+
+**Break:**
+- Removed the ufw rule allowing DNS from VM2:
+```bash
+  sudo ufw delete allow from 192.168.64.4 to any port 53
+```
+
+**Diagnosis (in order):**
+1. Checked SSH access from VM2 — still worked fine, confirming the issue was 
+   isolated to a specific service/rule, not a broader network or VM failure.
+![alt text](image-8.png)
+2. Checked DNS resolution from VM2 to confirm the actual symptom before 
+   assuming a cause:
+![alt text](image-9.png)
+3. Checked dnsmasq status on VM1 to rule out a service-level failure:
+![alt text](image-10.png)
+   Service was running, ruling out a dnsmasq problem and pointing toward 
+   the firewall.
+4. Checked ufw status directly and found the DNS rule missing:
+![alt text](image-11.png)
+
+**Root cause:** the ufw rule allowing port 53 from VM2 had been removed, 
+blocking DNS queries at the firewall while the dnsmasq service itself was 
+healthy and SSH access remained unaffected — confirming the break was 
+scoped to a single rule rather than a broader networking or service issue.
+
+**Fix:**
+```bash
+sudo ufw allow from 192.168.64.4 to any port 53
+```
+
+**Verification:**
+![alt text](image-12.png)
+
+**Takeaway:** checking the unrelated service (SSH) first, then the target 
+service's own health (dnsmasq), then the firewall config, ruled out two 
+possible causes before finding the actual one — this order avoids wasting 
+time changing the wrong thing first. Also confirmed: `ufw status verbose` 
+is a fast, cheap first check whenever a specific service is unreachable 
+but the host itself is otherwise fine.
+
+**Week 2 complete.** Next: Week 3 — Entra ID users/groups, Conditional 
+Access policy, and Intune device enrollment in the M365 tenant.
