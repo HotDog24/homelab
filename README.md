@@ -214,3 +214,22 @@ but the host itself is otherwise fine.
 
 **Week 2 complete.** Next: Week 3 — Entra ID users/groups, Conditional 
 Access policy, and Intune device enrollment in the M365 tenant.
+
+### Week 3 — Cloud Identity Basics (Entra ID / M365)
+
+**Sep 1, 2026 — Users, group, and licensing**
+- Created two test users in Entra ID (Identity → Users → New user):
+  - Jan Kowalski
+  - Sofia Chen
+- Created a security group "Helpdesk-Test-Users" (Identity → Groups → New group) and added both users to it.
+- Assigned a Business Premium license to Jan Kowalski via the M365 admin center (Users → Active users → Licenses and apps).
+- Checked total license pool: 25 licenses included in the trial, 2 currently assigned.
+
+**Verification:**
+
+![alt text](image-13.png)
+
+
+**Next:** set up a Conditional Access policy scoped to the Helpdesk-Test-Users 
+group, in report-only mode first, with the admin account explicitly excluded 
+as a safety measure before switching it live.
