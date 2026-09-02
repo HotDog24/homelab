@@ -233,3 +233,32 @@ Access policy, and Intune device enrollment in the M365 tenant.
 **Next:** set up a Conditional Access policy scoped to the Helpdesk-Test-Users 
 group, in report-only mode first, with the admin account explicitly excluded 
 as a safety measure before switching it live.
+
+**Sep 2, 2026 — Conditional Access policy: MFA for Helpdesk-Test-Users**
+
+**Setup:**
+- Created policy `CA001-Helpdesk-RequireMFA-Baseline` (Protection → Conditional Access → New policy).
+- Scope: Helpdesk-Test-Users group only (not All users).
+- Exclusion: admin account explicitly excluded, as a second independent safety net beyond the group scoping.
+- Grant control: Require multi-factor authentication.
+- Initial state: Report-only mode.
+
+**Test 1 — Report-only, Security Defaults still enabled:**
+- Signed in as Jan Kowalski; MFA prompt appeared.
+- Root cause: this was Security Defaults enforcing MFA tenant-wide, independent of the CA policy — report-only mode does not itself prompt for MFA, so this result didn't actually confirm the CA policy's logic yet.
+- Disabled Security Defaults (Identity → Properties → Manage security defaults) to isolate the CA policy's behavior on its own.
+
+**Test 2 — Report-only, Security Defaults disabled:**
+- Signed in as Jan Kowalski again; no MFA prompt — expected, since report-only mode logs matches without enforcing them.
+- Checked Conditional Access sign-in logs to confirm the policy showed as "would have applied" for this sign-in:
+
+![alt text](image-14.png)
+
+**Test 3 — Policy switched to On:**
+- Enabled the policy live.
+- Signed in as Jan Kowalski in a private browser window; MFA prompt appeared as expected.
+- Confirmed admin account sign-in was unaffected (excluded as designed).
+
+**Takeaway:** Security Defaults and custom Conditional Access policies can mask each other's behavior — disabling Security Defaults was necessary to test the CA policy in isolation. Also confirmed report-only mode is a logging-only step, not a soft-enforcement mode; the actual verification step is checking the sign-in logs for policy matches, not testing for a prompt that report-only was never going to produce.
+
+**Next:** enroll a Windows 11 device in Intune to complete Week 3.
