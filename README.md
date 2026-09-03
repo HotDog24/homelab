@@ -262,3 +262,14 @@ as a safety measure before switching it live.
 **Takeaway:** Security Defaults and custom Conditional Access policies can mask each other's behavior — disabling Security Defaults was necessary to test the CA policy in isolation. Also confirmed report-only mode is a logging-only step, not a soft-enforcement mode; the actual verification step is checking the sign-in logs for policy matches, not testing for a prompt that report-only was never going to produce.
 
 **Next:** enroll a Windows 11 device in Intune to complete Week 3.
+
+**Sep 3, 2026 — Windows 11 ARM64 VM setup in UTM**
+- Obtained official Windows 11 ARM64 ISO via UTM's built-in installer fetch tool (CrystalFetch / Microsoft Direct Download).
+- Created VM in UTM: Virtualize mode, 4 CPU cores, 6GB RAM, 30GB disk.
+- Friction: No install issues encountered.
+- Confirmed VM boots to Windows 11 desktop successfully.
+
+**Note on resource allocation:** allocated 6GB/4 cores based on host having 8 GB total RAM — may reduce if host becomes unresponsive while both Ubuntu VMs are also running.
+
+**Next:** join this VM to the Entra ID tenant / enroll in Intune via 
+Settings → Accounts → Access work or school.
